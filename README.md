@@ -76,7 +76,7 @@ __Example__
 
 4 - success and error closures
 
-```
+```swift
     request.se_fetchTypedJSON(
         successHandler:{ (r, json:[[String:AnyObject]]) in
             print(json)
