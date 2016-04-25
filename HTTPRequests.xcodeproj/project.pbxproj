@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		033CBAB81CCCC36A0022469D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033CBAB71CCCC36A0022469D /* main.swift */; };
 		033CBABF1CCCC3760022469D /* HTTPRequests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033CBABE1CCCC3760022469D /* HTTPRequests.swift */; };
+		03671DFD1CCE8AEC00137253 /* UnitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03671DFC1CCE8AEC00137253 /* UnitTests.swift */; };
+		03671E021CCE8D1300137253 /* HTTPRequests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 033CBABE1CCCC3760022469D /* HTTPRequests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -27,10 +29,20 @@
 		033CBAB41CCCC36A0022469D /* HTTPRequests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = HTTPRequests; sourceTree = BUILT_PRODUCTS_DIR; };
 		033CBAB71CCCC36A0022469D /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		033CBABE1CCCC3760022469D /* HTTPRequests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTTPRequests.swift; sourceTree = "<group>"; };
+		03671DFA1CCE8AEC00137253 /* UnitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		03671DFC1CCE8AEC00137253 /* UnitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnitTests.swift; sourceTree = "<group>"; };
+		03671DFE1CCE8AEC00137253 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		033CBAB11CCCC36A0022469D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		03671DF71CCE8AEC00137253 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -44,6 +56,7 @@
 			isa = PBXGroup;
 			children = (
 				033CBAB61CCCC36A0022469D /* HTTPRequests */,
+				03671DFB1CCE8AEC00137253 /* UnitTests */,
 				033CBAB51CCCC36A0022469D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				033CBAB41CCCC36A0022469D /* HTTPRequests */,
+				03671DFA1CCE8AEC00137253 /* UnitTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -63,6 +77,15 @@
 				033CBAB71CCCC36A0022469D /* main.swift */,
 			);
 			path = HTTPRequests;
+			sourceTree = "<group>";
+		};
+		03671DFB1CCE8AEC00137253 /* UnitTests */ = {
+			isa = PBXGroup;
+			children = (
+				03671DFC1CCE8AEC00137253 /* UnitTests.swift */,
+				03671DFE1CCE8AEC00137253 /* Info.plist */,
+			);
+			path = UnitTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -85,6 +108,23 @@
 			productReference = 033CBAB41CCCC36A0022469D /* HTTPRequests */;
 			productType = "com.apple.product-type.tool";
 		};
+		03671DF91CCE8AEC00137253 /* UnitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 03671E011CCE8AEC00137253 /* Build configuration list for PBXNativeTarget "UnitTests" */;
+			buildPhases = (
+				03671DF61CCE8AEC00137253 /* Sources */,
+				03671DF71CCE8AEC00137253 /* Frameworks */,
+				03671DF81CCE8AEC00137253 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = UnitTests;
+			productName = UnitTests;
+			productReference = 03671DFA1CCE8AEC00137253 /* UnitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -96,6 +136,9 @@
 				ORGANIZATIONNAME = "Nicolas Seriot";
 				TargetAttributes = {
 					033CBAB31CCCC36A0022469D = {
+						CreatedOnToolsVersion = 7.3;
+					};
+					03671DF91CCE8AEC00137253 = {
 						CreatedOnToolsVersion = 7.3;
 					};
 				};
@@ -113,9 +156,20 @@
 			projectRoot = "";
 			targets = (
 				033CBAB31CCCC36A0022469D /* HTTPRequests */,
+				03671DF91CCE8AEC00137253 /* UnitTests */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		03671DF81CCE8AEC00137253 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		033CBAB01CCCC36A0022469D /* Sources */ = {
@@ -124,6 +178,15 @@
 			files = (
 				033CBAB81CCCC36A0022469D /* main.swift in Sources */,
 				033CBABF1CCCC3760022469D /* HTTPRequests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		03671DF61CCE8AEC00137253 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				03671DFD1CCE8AEC00137253 /* UnitTests.swift in Sources */,
+				03671E021CCE8D1300137253 /* HTTPRequests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -226,6 +289,28 @@
 			};
 			name = Release;
 		};
+		03671DFF1CCE8AEC00137253 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = UnitTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = ch.seriot.UnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		03671E001CCE8AEC00137253 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = UnitTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = ch.seriot.UnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -243,6 +328,15 @@
 			buildConfigurations = (
 				033CBABC1CCCC36A0022469D /* Debug */,
 				033CBABD1CCCC36A0022469D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		03671E011CCE8AEC00137253 /* Build configuration list for PBXNativeTarget "UnitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				03671DFF1CCE8AEC00137253 /* Debug */,
+				03671E001CCE8AEC00137253 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 		};
