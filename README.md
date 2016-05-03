@@ -22,7 +22,7 @@ __Motivation__
 
 Demonstrates how to handle errors in an asychronous Swift API.
 
-Initially written as the companion code for my [AppBuilders 2016](https://www.appbuilders.ch/) talk on error handling.
+Initially written as the companion code for my [AppBuilders 2016](https://www.appbuilders.ch/) talk on [error handling](http://seriot.ch/resources/talks_papers/20160426_error_handling.pdf).
 
 __Example__
 
