@@ -8,6 +8,16 @@
 
 import Foundation
 
+extension ErrorType {
+    func nsError(localizedDescription:String?) -> NSError {
+        var userInfo : [String:String] = [:]
+        if let s = localizedDescription {
+            userInfo[NSLocalizedDescriptionKey] = s
+        }
+        return NSError(domain: self._domain, code: self._code, userInfo: userInfo)
+    }
+}
+
 public class HTTPResponse : NSObject {
     
     public enum Error: ErrorType {
@@ -32,17 +42,13 @@ public class HTTPResponse : NSObject {
     
     public func json<T>(type:T.Type) throws -> T {
         guard let existingData = self.data else {
-            throw NSError(domain: "HTTPResponse", code: Error.NoData._code, userInfo: [NSLocalizedDescriptionKey:"No Data"])
+            throw Error.NoData.nsError("No Data")
         }
         
         let json = try NSJSONSerialization.JSONObjectWithData(existingData, options: [])
         
         guard let typedJSON = json as? T else {
-            throw NSError(
-                domain: "HTTPResponse",
-                code: Error.UnexpectedJSONType._code,
-                userInfo: [NSLocalizedDescriptionKey:"Expected JSON type: \(type.dynamicType), found: \(json.dynamicType)"]
-            )
+            throw Error.UnexpectedJSONType.nsError("Expected JSON type: \(type.dynamicType), found: \(json.dynamicType)")
         }
         
         return typedJSON
