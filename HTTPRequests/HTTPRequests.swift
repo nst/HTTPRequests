@@ -9,10 +9,13 @@
 import Foundation
 
 extension ErrorType {
-    func nsError(localizedDescription:String?) -> NSError {
-        var userInfo : [String:String] = [:]
+    func nsError(localizedDescription:String?, underlyingError:NSError? = nil) -> NSError {
+        var userInfo : [NSObject:AnyObject] = [:]
         if let s = localizedDescription {
             userInfo[NSLocalizedDescriptionKey] = s
+        }
+        if let u = underlyingError {
+            userInfo[NSUnderlyingErrorKey] = u
         }
         return NSError(domain: self._domain, code: self._code, userInfo: userInfo)
     }
