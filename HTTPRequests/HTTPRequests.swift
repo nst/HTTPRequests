@@ -8,9 +8,9 @@
 
 import Foundation
 
-extension ErrorType {
-    func nsError(localizedDescription:String?, underlyingError:NSError? = nil) -> NSError {
-        var userInfo : [NSObject:AnyObject] = [:]
+extension Error {
+    func nsError(_ localizedDescription:String?, underlyingError:NSError? = nil) -> NSError {
+        var userInfo : [AnyHashable: Any] = [:]
         if let s = localizedDescription {
             userInfo[NSLocalizedDescriptionKey] = s
         }
@@ -21,37 +21,37 @@ extension ErrorType {
     }
 }
 
-public class HTTPResponse : NSObject {
+open class HTTPResponse : NSObject {
     
-    public enum Error: ErrorType {
-        case NoData
-        case UnexpectedJSONType
+    public enum HTTPResponse: Error {
+        case noData
+        case unexpectedJSONType
     }
     
-    public var status : Int = 0
-    public var headers : [NSObject:AnyObject] = [:]
-    public var data : NSData? = nil
+    open var status : Int = 0
+    open var headers : [AnyHashable: Any] = [:]
+    open var data : Data? = nil
     
     override public init() {
         super.init()
     }
     
-    public init(status:Int, headers:[NSObject:AnyObject], data:NSData) {
+    public init(status:Int, headers:[AnyHashable: Any], data:Data) {
         super.init()
         self.status = status
         self.headers = headers
         self.data = data
     }
     
-    public func json<T>(type:T.Type) throws -> T {
+    open func json<T>(_ type:T.Type) throws -> T {
         guard let existingData = self.data else {
-            throw Error.NoData.nsError("No Data")
+            throw HTTPResponse.noData.nsError("No Data")
         }
         
-        let json = try NSJSONSerialization.JSONObjectWithData(existingData, options: [])
+        let json = try JSONSerialization.jsonObject(with: existingData, options: [])
         
         guard let typedJSON = json as? T else {
-            throw Error.UnexpectedJSONType.nsError("Expected JSON type: \(type.dynamicType), found: \(json.dynamicType)")
+            throw HTTPResponse.unexpectedJSONType.nsError("Expected JSON type: \(type(of: type)), found: \(type(of: json))")
         }
         
         return typedJSON
@@ -59,36 +59,36 @@ public class HTTPResponse : NSObject {
 }
 
 public enum HTTPResultType<T> {
-    case Success(httpResponse:HTTPResponse, value:T)
-    case Failure(httpResponse:HTTPResponse, nsError:NSError)
+    case success(httpResponse:HTTPResponse, value:T)
+    case failure(httpResponse:HTTPResponse, nsError:NSError)
 }
 
-public enum DRError : ErrorType {
-    case Error(httpResponse:HTTPResponse, nsError:NSError)
+public enum DRError : Error {
+    case error(httpResponse:HTTPResponse, nsError:NSError)
 }
 
 // 1. sum type
-extension NSURLRequest {
+extension URLRequest {
     
-    public func st_fetchData(completionHandler:(HTTPResultType<NSData>)->()) {
+    public func st_fetchData(_ completionHandler:@escaping (HTTPResultType<Data>)->()) {
         
         #if DEBUG
             print(self.curlDescription())
         #endif
         
-        NSURLSession.sharedSession().dataTaskWithRequest(self) { (optionalData, optionalResponse, optionalError) -> Void in
+        URLSession.shared.dataTask(with: self, completionHandler: { (optionalData, optionalResponse, optionalError) -> Void in
             
-            dispatch_async(dispatch_get_main_queue(),{
+            DispatchQueue.main.async(execute: {
                 
                 guard let data = optionalData else {
                     guard let e = optionalError else { assertionFailure(); return }
-                    completionHandler(.Failure(httpResponse: HTTPResponse(), nsError: e))
+                    completionHandler(.failure(httpResponse: HTTPResponse(), nsError: e as NSError))
                     return
                 }
                 
-                guard let httpResponse = optionalResponse as? NSHTTPURLResponse else {
+                guard let httpResponse = optionalResponse as? HTTPURLResponse else {
                     guard let e = optionalError else { assertionFailure(); return }
-                    completionHandler(.Failure(httpResponse: HTTPResponse(), nsError: e))
+                    completionHandler(.failure(httpResponse: HTTPResponse(), nsError: e as NSError))
                     return
                 }
                 
@@ -97,28 +97,28 @@ extension NSURLRequest {
                     headers:httpResponse.allHeaderFields,
                     data:data)
                 
-                completionHandler(.Success(httpResponse:response, value:data))
+                completionHandler(.success(httpResponse:response, value:data))
             })
-            }.resume()
+            }) .resume()
     }
     
-    public func st_fetchJSON(completionHandler:(HTTPResultType<AnyObject>)->()) {
+    public func st_fetchJSON(_ completionHandler:@escaping (HTTPResultType<AnyObject>)->()) {
         st_fetchTypedJSON(AnyObject.self) {
             completionHandler($0)
         }
     }
     
-    public func st_fetchTypedJSON<T>(type:T.Type, completionHandler:HTTPResultType<T> -> ()) {
+    public func st_fetchTypedJSON<T>(_ type:T.Type, completionHandler:@escaping (HTTPResultType<T>) -> ()) {
         st_fetchData { (result) -> () in
             
             switch(result) {
-            case let .Failure(httpResponse, nsError):
-                completionHandler(.Failure(httpResponse: httpResponse, nsError: nsError))
-            case let .Success(httpResponse, _):
+            case let .failure(httpResponse, nsError):
+                completionHandler(.failure(httpResponse: httpResponse, nsError: nsError))
+            case let .success(httpResponse, _):
                 do {
-                    completionHandler(.Success(httpResponse: httpResponse, value: try httpResponse.json(T)))
+                    completionHandler(.success(httpResponse: httpResponse, value: try httpResponse.json(T.self)))
                 } catch let e as NSError {
-                    completionHandler(.Failure(httpResponse: httpResponse, nsError: e))
+                    completionHandler(.failure(httpResponse: httpResponse, nsError: e))
                 }
             }
         }
@@ -126,27 +126,27 @@ extension NSURLRequest {
 }
 
 // 2. deferred result
-extension NSURLRequest {
+extension URLRequest {
     
-    public func dr_fetchData(completion:(result: () throws -> HTTPResponse) -> () ) {
+    public func dr_fetchData(_ completion:@escaping (_ result: () throws -> HTTPResponse) -> () ) {
         
         #if DEBUG
             print(self.curlDescription())
         #endif
         
-        NSURLSession.sharedSession().dataTaskWithRequest(self) { (optionalData, optionalResponse, optionalError) -> Void in
+        URLSession.shared.dataTask(with: self, completionHandler: { (optionalData, optionalResponse, optionalError) -> Void in
             
-            dispatch_async(dispatch_get_main_queue(), {
+            DispatchQueue.main.async(execute: {
                 
                 guard let data = optionalData else {
                     guard let e = optionalError else { assertionFailure(); return }
-                    completion(result: { throw e } )
+                    completion({ throw e } )
                     return
                 }
                 
-                guard let httpResponse = optionalResponse as? NSHTTPURLResponse else {
+                guard let httpResponse = optionalResponse as? HTTPURLResponse else {
                     guard let e = optionalError else { assertionFailure(); return }
-                    completion(result: { throw e } )
+                    completion({ throw e } )
                     return
                 }
                 
@@ -155,49 +155,49 @@ extension NSURLRequest {
                     headers:httpResponse.allHeaderFields,
                     data:data)
                 
-                completion(result: { return response })
+                completion({ return response })
             })
-            }.resume()
+            }) .resume()
     }
     
-    public func dr_fetchJSON(completion:(result: () throws -> (httpResponse:HTTPResponse, json:AnyObject)) -> () ) {
+    public func dr_fetchJSON(_ completion:@escaping (_ result: () throws -> (httpResponse:HTTPResponse, json:AnyObject)) -> () ) {
         dr_fetchTypedJSON(AnyObject.self, completion: completion)
     }
     
-    public func dr_fetchTypedJSON<T>(type:T.Type, completion:(result: () throws -> (httpResponse:HTTPResponse, json:T)) -> () ) {
+    public func dr_fetchTypedJSON<T>(_ type:T.Type, completion:@escaping (_ result: () throws -> (httpResponse:HTTPResponse, json:T)) -> () ) {
         dr_fetchData {
             do {
                 let httpResponse = try $0()
-                completion(result: { return (httpResponse:httpResponse, json:try httpResponse.json(T)) } )
+                completion({ return (httpResponse:httpResponse, json:try httpResponse.json(T.self)) } )
             } catch let e as NSError {
-                completion(result: { throw e } )
+                completion({ throw e } )
             }
         }
     }
 }
 
 // 3. deferred result and DRError
-extension NSURLRequest {
+extension URLRequest {
     
-    public func dr2_fetchData(completion:(result: () throws -> HTTPResponse) -> () ) {
+    public func dr2_fetchData(_ completion:@escaping (_ result: () throws -> HTTPResponse) -> () ) {
         
         #if DEBUG
             print(self.curlDescription())
         #endif
         
-        NSURLSession.sharedSession().dataTaskWithRequest(self) { (optionalData, optionalResponse, optionalError) -> Void in
+        URLSession.shared.dataTask(with: self, completionHandler: { (optionalData, optionalResponse, optionalError) -> Void in
             
-            dispatch_async(dispatch_get_main_queue(), {
+            DispatchQueue.main.async(execute: {
                 
                 guard let data = optionalData else {
                     guard let e = optionalError else { assertionFailure(); return }
-                    completion(result: { throw DRError.Error(httpResponse:HTTPResponse(), nsError:e) } )
+                    completion({ throw DRError.error(httpResponse:HTTPResponse(), nsError:e as NSError) } )
                     return
                 }
                 
-                guard let httpResponse = optionalResponse as? NSHTTPURLResponse else {
+                guard let httpResponse = optionalResponse as? HTTPURLResponse else {
                     guard let e = optionalError else { assertionFailure(); return }
-                    completion(result: { throw DRError.Error(httpResponse:HTTPResponse(), nsError:e) } )
+                    completion({ throw DRError.error(httpResponse:HTTPResponse(), nsError:e as NSError) } )
                     return
                 }
                 
@@ -206,60 +206,60 @@ extension NSURLRequest {
                     headers:httpResponse.allHeaderFields,
                     data:data)
                 
-                completion(result: { return response })
+                completion({ return response })
             })
-            }.resume()
+            }) .resume()
     }
     
-    public func dr2_fetchJSON(completion:(result: () throws -> (httpResponse:HTTPResponse, json:AnyObject)) -> () ) {
+    public func dr2_fetchJSON(_ completion:@escaping (_ result: () throws -> (httpResponse:HTTPResponse, json:AnyObject)) -> () ) {
         dr2_fetchTypedJSON(AnyObject.self, completion: completion)
     }
     
-    public func dr2_fetchTypedJSON<T>(type:T.Type, completion:(result: () throws -> (httpResponse:HTTPResponse, json:T)) -> () ) {
+    public func dr2_fetchTypedJSON<T>(_ type:T.Type, completion:@escaping (_ result: () throws -> (httpResponse:HTTPResponse, json:T)) -> () ) {
         dr2_fetchData {
             do {
                 let httpResponse = try $0()
                 do {
-                    let json = try httpResponse.json(T)
-                    completion(result: { return (httpResponse:httpResponse, json:json) } )
+                    let json = try httpResponse.json(T.self)
+                    completion({ return (httpResponse:httpResponse, json:json) } )
                 } catch let nsError as NSError { // JSON error
-                    let dre = DRError.Error(httpResponse:httpResponse, nsError:nsError)
-                    completion(result: { throw dre } )
+                    let dre = DRError.error(httpResponse:httpResponse, nsError:nsError)
+                    completion({ throw dre } )
                 } catch {
-                    completion(result: { throw error } )
+                    completion({ throw error } )
                 }
             } catch let dre as DRError {
-                completion(result: { throw dre } )
+                completion({ throw dre } )
             } catch let nsError as NSError {
-                completion(result: { throw DRError.Error(httpResponse:HTTPResponse(), nsError:nsError) } )
+                completion({ throw DRError.error(httpResponse:HTTPResponse(), nsError:nsError) } )
             }
         }
     }
 }
 
 // 4. success and error closures
-extension NSURLRequest {
+extension URLRequest {
     
-    @objc
-    public func se_fetchData(successHandler successHandler:(HTTPResponse)->(), errorHandler:(NSError)->()) {
+    
+    public func se_fetchData(successHandler:@escaping (HTTPResponse)->(), errorHandler:@escaping (NSError)->()) {
         
         #if DEBUG
             print(self.curlDescription())
         #endif
         
-        NSURLSession.sharedSession().dataTaskWithRequest(self) { (optionalData, optionalResponse, optionalError) -> Void in
+        URLSession.shared.dataTask(with: self, completionHandler: { (optionalData, optionalResponse, optionalError) -> Void in
             
-            dispatch_async(dispatch_get_main_queue(),{
+            DispatchQueue.main.async(execute: {
                 
                 guard let data = optionalData else {
                     guard let e = optionalError else { assertionFailure(); return }
-                    errorHandler(e)
+                    errorHandler(e as NSError)
                     return
                 }
                 
-                guard let httpResponse = optionalResponse as? NSHTTPURLResponse else {
+                guard let httpResponse = optionalResponse as? HTTPURLResponse else {
                     guard let e = optionalError else { assertionFailure(); return }
-                    errorHandler(e)
+                    errorHandler(e as NSError)
                     return
                 }
                 
@@ -270,13 +270,13 @@ extension NSURLRequest {
                 
                 successHandler(response)
             })
-            }.resume()
+            }) .resume()
     }
     
-    @objc
+    
     public func se_fetchJSON(
-        successHandler successHandler:(HTTPResponse, AnyObject)->(),
-                       errorHandler:(HTTPResponse, NSError)->()) {
+        successHandler:@escaping (HTTPResponse, AnyObject)->(),
+                       errorHandler:@escaping (HTTPResponse, NSError)->()) {
         
         se_fetchTypedJSON(successHandler: { (httpResponse, json:AnyObject) in
             successHandler(httpResponse, json)
@@ -286,13 +286,13 @@ extension NSURLRequest {
     }
     
     public func se_fetchTypedJSON<T>(
-        successHandler successHandler:(HTTPResponse, T)->(),
-                       errorHandler:(HTTPResponse, NSError)->()) {
+        successHandler:@escaping (HTTPResponse, T)->(),
+                       errorHandler:@escaping (HTTPResponse, NSError)->()) {
         
         se_fetchData(
             successHandler:{ (httpResponse) in
                 do {
-                    let json = try httpResponse.json(T)
+                    let json = try httpResponse.json(T.self)
                     successHandler(httpResponse, json)
                 } catch let e as NSError {
                     errorHandler(httpResponse, e)
@@ -305,7 +305,7 @@ extension NSURLRequest {
 }
 
 // cURL description
-extension NSURLRequest {
+extension URLRequest {
     
     public func curlDescription() -> String {
         
@@ -313,53 +313,53 @@ extension NSURLRequest {
         
         if let
             credential = self.requestCredential(),
-            user = credential.user,
-            password = credential.password
+            let user = credential.user,
+            let password = credential.password
         {
             s += "-u \(user):\(password) \\\n"
         }
         
-        if let method = self.HTTPMethod where method != "GET" {
+        if let method = self.httpMethod , method != "GET" {
             s += "-X \(method) \\\n"
         }
         
         self.allHTTPHeaderFields?.forEach({ (k,v) -> () in
-            let kEscaped = k.stringByReplacingOccurrencesOfString("\"", withString: "\\\"")
-            let vEscaped = v.stringByReplacingOccurrencesOfString("\"", withString: "\\\"")
+            let kEscaped = k.replacingOccurrences(of: "\"", with: "\\\"")
+            let vEscaped = v.replacingOccurrences(of: "\"", with: "\\\"")
             s += "-H \"\(kEscaped): \(vEscaped)\" \\\n"
         })
         
-        if let url = self.URL {
-            if let cookies = NSHTTPCookieStorage.sharedHTTPCookieStorage().cookiesForURL(url) {
-                for (_,v) in NSHTTPCookie.requestHeaderFieldsWithCookies(cookies) {
+        if let url = self.url {
+            if let cookies = HTTPCookieStorage.shared.cookies(for: url) {
+                for (_,v) in HTTPCookie.requestHeaderFields(with: cookies) {
                     s += "-H \"Cookie: \(v)\" \\\n"
                 }
             }
         }
         
-        if let bodyData = self.HTTPBody,
-            bodyString = NSString(data: bodyData, encoding: NSUTF8StringEncoding) as? String {
-            let bodyEscaped = bodyString.stringByReplacingOccurrencesOfString("\"", withString: "\\\"")
+        if let bodyData = self.httpBody,
+            let bodyString = NSString(data: bodyData, encoding: String.Encoding.utf8.rawValue) as? String {
+            let bodyEscaped = bodyString.replacingOccurrences(of: "\"", with: "\\\"")
             s += "-d \"\(bodyEscaped)\" \\\n"
         }
         
-        if let url = self.URL {
+        if let url = self.url {
             s += "\"\(url.absoluteString)\"\n"
         }
         
         return s
     }
     
-    private func requestCredential() -> NSURLCredential? {
+    fileprivate func requestCredential() -> URLCredential? {
         
-        guard let url = self.URL else { return nil }
+        guard let url = self.url else { return nil }
         guard let host = url.host else { return nil }
         
-        let credentialsDictionary = NSURLCredentialStorage.sharedCredentialStorage().allCredentials
+        let credentialsDictionary = URLCredentialStorage.shared.allCredentials
         
         for protectionSpace in credentialsDictionary.keys {
             
-            if let c = credentialsDictionary.values.first?.values.first where
+            if let c = credentialsDictionary.values.first?.values.first ,
                 // we consider neither realm nor host, NSURL instance doesn't know them in advance
                 (host as NSString).hasSuffix(protectionSpace.host) &&
                     protectionSpace.`protocol` == url.scheme {

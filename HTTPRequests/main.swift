@@ -10,36 +10,36 @@ import Foundation
 
 func requestWithSumType() {
     
-    let url = NSURL(string:"http://seriot.ch/objects.json")!
-    let request = NSURLRequest(URL: url)
+    let url = URL(string:"http://seriot.ch/objects.json")!
+    let request = URLRequest(url: url)
     
     request.st_fetchData {
         switch($0) {
-        case let .Success(r, data):
+        case let .success(r, data):
             print(r.status, data)
-        case let .Failure(r, nsError):
+        case let .failure(r, nsError):
             print(r.status, nsError.localizedDescription)
         }
     }
     
     request.st_fetchJSON {
         switch($0) {
-        case let .Success(r, json) where 200..<300 ~= r.status:
+        case let .success(r, json) where 200..<300 ~= r.status:
             print(json)
-        case let .Success(r, json) where r.status == 450:
+        case let .success(r, json) where r.status == 450:
             print(json)
-        case let .Success(r, json):
+        case let .success(r, json):
             print(r.status, json)
-        case let .Failure(r, nsError):
+        case let .failure(r, nsError):
             print(r.status, nsError.localizedDescription)
         }
     }
     
     request.st_fetchTypedJSON([[String:AnyObject]].self) {
         switch($0) {
-        case let .Success(r, json):
+        case let .success(r, json):
             print(r.status, json)
-        case let .Failure(r, nsError):
+        case let .failure(r, nsError):
             print(r.status, nsError.localizedDescription)
         }
     }
@@ -47,8 +47,8 @@ func requestWithSumType() {
 
 func requestWithDeferredResult() {
     
-    let url = NSURL(string:"http://seriot.ch/objects.json")!
-    let request = NSURLRequest(URL: url)
+    let url = URL(string:"http://seriot.ch/objects.json")!
+    let request = URLRequest(url: url)
     
     request.dr_fetchData {
         do {
@@ -86,14 +86,14 @@ func requestWithDeferredResult() {
 
 func requestWithDeferredResultAndDRError() {
     
-    let url = NSURL(string:"http://seriot.ch/objects.json")!
-    let request = NSURLRequest(URL: url)
+    let url = URL(string:"http://seriot.ch/objects.json")!
+    let request = URLRequest(url: url)
     
     request.dr2_fetchJSON() {
         do {
             let (r, json) = try $0()
             print(r.status, json)
-        } catch let DRError.Error(r, nsError) {
+        } catch let DRError.error(r, nsError) {
             print(r.status, nsError)
         } catch {
             print(error)
@@ -104,7 +104,7 @@ func requestWithDeferredResultAndDRError() {
         do {
             let (r, json) = try $0()
             print(r.status, json)
-        } catch let DRError.Error(r, nsError) {
+        } catch let DRError.error(r, nsError) {
             print(r.status, nsError)
         } catch {
             print(error)
@@ -115,9 +115,9 @@ func requestWithDeferredResultAndDRError() {
         do {
             let (r, json) = try $0()
             print(r.status, json)
-        } catch let DRError.Error(r, nsError) where r.status == 400 {
+        } catch let DRError.error(r, nsError) where r.status == 400 {
             print(r.status, nsError)
-        } catch let DRError.Error(r, nsError) {
+        } catch let DRError.error(r, nsError) {
             print(r.status, nsError)
         } catch {
             assertionFailure()
@@ -127,8 +127,8 @@ func requestWithDeferredResultAndDRError() {
 
 func requestWithSuccessError() {
     
-    let url = NSURL(string:"http://seriot.ch/objects.json")!
-    let request = NSURLRequest(URL: url)
+    let url = URL(string:"http://seriot.ch/objects.json")!
+    let request = URLRequest(url: url)
     
     request.se_fetchData(
         successHandler: { (r) in
@@ -165,7 +165,7 @@ func main() {
     
     requestWithSuccessError()
     
-    NSRunLoop.mainRunLoop().run()
+    RunLoop.main.run()
 }
 
 main()
