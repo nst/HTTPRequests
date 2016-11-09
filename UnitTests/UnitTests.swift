@@ -22,11 +22,12 @@ class UnitTests: XCTestCase {
     
     func testExample() {
         
-        let url = NSURL(string:"http://seriot.ch/objects.json")!
-        let request = NSURLRequest(URL: url)
+        let url = URL(string:"http://seriot.ch/objects.json")!
+        let request = URLRequest(url: url)
         
-        let expectationGoodType = expectationWithDescription("expectationGoodType")
-        let expectationBadType = expectationWithDescription("expectationBadType")
+        let expectationGoodType = expectation(description:"expectationGoodType")
+        let expectationBadType = expectation(description:"expectationBadType")
+        
         
         request.dr_fetchTypedJSON([[String:AnyObject]].self) {
             do {
@@ -49,7 +50,7 @@ class UnitTests: XCTestCase {
         }
 
         // Loop until the expectation is fulfilled
-        waitForExpectationsWithTimeout(5, handler: { error in
+        waitForExpectations(timeout: 5, handler: { error in
             XCTAssertNil(error, "Error")
         })
     }
